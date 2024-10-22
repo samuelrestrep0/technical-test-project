@@ -1,6 +1,5 @@
 module "vpc" {
-  source  = "terraform-aws-modules/vpc/aws"
-  version = "v3.15.0"  # Usa la última versión estable
+  source = "terraform-aws-modules/vpc/aws"
 
   name = var.vpc_name
   cidr = var.vpc_cidr
@@ -10,9 +9,12 @@ module "vpc" {
   public_subnets  = var.public_subnets
 
   enable_nat_gateway = true
-  single_nat_gateway = false  # Para tener un NAT Gateway en cada subred pública
-  enable_dns_support = true
-  enable_dns_hostnames = true
+  enable_vpn_gateway = true
+
+  tags = {
+    Terraform   = "true"
+    Environment = "dev"
+  }
 }
 
 resource "aws_security_group" "eks_sg" {
@@ -70,75 +72,136 @@ resource "aws_security_group" "alb_sg" {
 }
 
 module "eks" {
-  source          = "terraform-aws-modules/eks/aws"
-  version         = "v19.0.0"  # Usa la última versión estable
+  source  = "terraform-aws-modules/eks/aws"
+  version = "~> 20.0"
 
   cluster_name    = var.eks_cluster_name
   cluster_version = var.eks_cluster_version
-  subnets         = module.vpc.private_subnets
-  vpc_id          = module.vpc.vpc_id
 
-  node_groups = {
-    eks_nodes = {
-      desired_capacity = var.eks_desired_capacity
-      max_capacity     = var.eks_max_capacity
-      min_capacity     = var.eks_min_capacity
+  cluster_endpoint_public_access  = true
 
-      instance_type = var.eks_instance_type
-      key_name      = var.key_name
+  cluster_addons = {
+    coredns                = {}
+    eks-pod-identity-agent = {}
+    kube-proxy             = {}
+    vpc-cni                = {}
+  }
 
-      # Añadir el grupo de seguridad para los nodos de EKS
-      security_groups = [aws_security_group.eks_sg.id]
+  vpc_id                   = module.vpc.vpc_id
+  subnet_ids               = module.vpc.private_subnets
+  control_plane_subnet_ids = module.vpc.public_subnets
+
+  eks_managed_node_group_defaults = {
+    instance_types = ["m6i.large", "m5.large", "m5n.large", "m5zn.large"]
+  }
+
+  eks_managed_node_groups = {
+    example = {
+      ami_type       = "AL2023_x86_64_STANDARD"
+      instance_types = [var.eks_instance_type]
+
+      min_size     = var.eks_min_capacity
+      max_size     = var.eks_max_capacity
+      desired_size = var.eks_desired_capacity
     }
   }
 
-  manage_aws_auth = true
-}
+  enable_cluster_creator_admin_permissions = true
 
-module "dynamodb" {
-  source  = "terraform-aws-modules/dynamodb-table/aws"
-  version = "v2.0.0"  # Usa la última versión estable
+  access_entries = {
+    example = {
+      kubernetes_groups = []
+      principal_arn     = "arn:aws:iam::123456789012:role/something"
 
-  name         = var.dynamodb_table_name
-  billing_mode = "PAY_PER_REQUEST"  # Modelo de pago por uso (opcional)
-  
-  attribute {
-    name = "id"
-    type = "S"  # Tipo de atributo: S para String
+      policy_associations = {
+        example = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
+          access_scope = {
+            namespaces = ["default"]
+            type       = "namespace"
+          }
+        }
+      }
+    }
   }
 
+  tags = {
+    Environment = "dev"
+    Terraform   = "true"
+  }
+}
+
+module "dynamodb_table" {
+  source   = "terraform-aws-modules/dynamodb-table/aws"
+
+  name     = var.dynamodb_table_name
   hash_key = "id"
 
+  attributes = [
+    {
+      name = "id"
+      type = "N"
+    }
+  ]
+
   tags = {
-    Name = var.dynamodb_table_name
+    Terraform   = "true"
+    Environment = "staging"
   }
 }
 
 module "alb" {
   source  = "terraform-aws-modules/alb/aws"
-  version = "v8.0.0"
+  version = "~> 6.0"
 
   name               = var.alb_name
   load_balancer_type = "application"
+
   vpc_id             = module.vpc.vpc_id
   subnets            = module.vpc.public_subnets
+  security_groups    = [aws_security_group.alb_sg.id]
+
+  access_logs = {
+    bucket = var.alb_logs_bucket
+  }
+
+  target_groups = [
+    {
+      name_prefix      = "pref-"
+      backend_protocol = "HTTP"
+      backend_port     = 80
+      target_type      = "instance"
+      targets = [
+        {
+          target_id = var.target_id_1
+          port = 80
+        },
+        {
+          target_id = var.target_id_2
+          port = 8080
+        }
+      ]
+    }
+  ]
+
+  https_listeners = [
+    {
+      port               = 443
+      protocol           = "HTTPS"
+      certificate_arn    = var.certificate_arn
+      target_group_index = 0
+    }
+  ]
 
   http_tcp_listeners = [
     {
-      port        = 80
-      protocol    = "HTTP"
-      target_type = "ip"
-    },
-    {
-      port        = 443
-      protocol    = "HTTPS"
-      target_type = "ip"
+      port               = 80
+      protocol           = "HTTP"
+      target_group_index = 0
     }
   ]
 
   tags = {
-    Name = var.alb_name
+    Environment = "Test"
   }
-
-  security_groups = [aws_security_group.alb_sg.id]
 }

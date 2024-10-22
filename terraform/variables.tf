@@ -75,3 +75,23 @@ variable "alb_name" {
   description = "Name of the Application Load Balancer"
   default     = "my-alb"
 }
+
+variable "alb_logs_bucket" {
+  description = "S3 bucket for ALB access logs"
+  default     = "my-alb-logs"
+}
+
+variable "certificate_arn" {
+  description = "ARN of the SSL certificate for ALB"
+  default     = "arn:aws:iam::123456789012:server-certificate/test_cert-123456789012"
+}
+
+variable "target_id_1" {
+  description = "Target ID for the first instance"
+  default     = "i-0123456789abcdefg"
+}
+
+variable "target_id_2" {
+  description = "Target ID for the second instance"
+  default     = "i-a1b2c3d4e5f6g7h8i"
+}
