@@ -18,7 +18,7 @@ module "vpc" {
 }
 
 resource "aws_security_group" "eks_sg" {
-  name        = "eks_security_group"
+  name        = var.eks_security_group_name
   description = "Allow traffic to EKS nodes"
   vpc_id      = module.vpc.vpc_id
 
@@ -45,7 +45,7 @@ resource "aws_security_group" "eks_sg" {
 }
 
 resource "aws_security_group" "alb_sg" {
-  name        = "alb_security_group"
+  name        = var.alb_security_group_name
   description = "Allow traffic to ALB"
   vpc_id      = module.vpc.vpc_id
 
@@ -92,13 +92,13 @@ module "eks" {
   control_plane_subnet_ids = module.vpc.public_subnets
 
   eks_managed_node_group_defaults = {
-    instance_types = ["m6i.large", "m5.large", "m5n.large", "m5zn.large"]
+    instance_types = var.eks_instance_types
   }
 
   eks_managed_node_groups = {
     example = {
-      ami_type       = "AL2023_x86_64_STANDARD"
-      instance_types = [var.eks_instance_type]
+      ami_type       = var.eks_ami_type
+      instance_types = [var.eks_instance_types]
 
       min_size     = var.eks_min_capacity
       max_size     = var.eks_max_capacity
@@ -141,7 +141,7 @@ module "dynamodb_table" {
     {
       name = "id"
       type = "N"
-    }
+    },
   ]
 
   tags = {
@@ -155,15 +155,15 @@ module "alb" {
   version = "~> 6.0"
 
   name               = var.alb_name
-  load_balancer_type = "application"
+  load_balancer_type = var.lb_type
 
   vpc_id             = module.vpc.vpc_id
   subnets            = module.vpc.public_subnets
   security_groups    = [aws_security_group.alb_sg.id]
 
-  access_logs = {
+  /*access_logs = {
     bucket = var.alb_logs_bucket
-  }
+  }*/
 
   target_groups = [
     {

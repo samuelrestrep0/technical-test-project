@@ -4,8 +4,8 @@ variable "aws_region" {
 }
 
 variable "vpc_name" {
-  description = "Name of the VPC"
-  default     = "my-vpc"
+  description = "bancolombia-vpc"
+  default     = "technical-test-vpc"
 }
 
 variable "vpc_cidr" {
@@ -16,7 +16,11 @@ variable "vpc_cidr" {
 variable "azs" {
   description = "Availability zones"
   type        = list(string)
-  default     = ["us-east-1a", "us-east-1b", "us-east-1c"]
+  default     = ["us-east-1a", "us-east-1b"]
+}
+variable "eks_ami_type"{
+  description="AMi for the nodes"
+  default="AL2023_x86_64_STANDARD"
 }
 
 variable "private_subnets" {
@@ -33,7 +37,17 @@ variable "public_subnets" {
 
 variable "eks_cluster_name" {
   description = "Name of the EKS cluster"
-  default     = "my-eks-cluster"
+  default     = "eks-cluster"
+}
+
+variable "eks_security_group_name" {
+  description = "name for the eks security group"
+  default     = "eks_sg"
+}
+
+variable "alb_security_group_name" {
+  description = "name for the app load balancer"
+  default     = "alb_sg"
 }
 
 variable "eks_cluster_version" {
@@ -50,15 +64,13 @@ variable "eks_max_capacity" {
   description = "Maximum capacity for EKS nodes"
   default     = 3
 }
-
+variable "eks_instance_types" {
+  description = "Instance type for EKS nodes"
+  default     = "t3.micro"
+}
 variable "eks_min_capacity" {
   description = "Minimum capacity for EKS nodes"
   default     = 1
-}
-
-variable "eks_instance_type" {
-  description = "Instance type for EKS nodes"
-  default     = "t3.medium"
 }
 
 variable "key_name" {
@@ -68,12 +80,17 @@ variable "key_name" {
 
 variable "dynamodb_table_name" {
   description = "Name of the DynamoDB table"
-  default     = "MyDynamoDBTable"
+  default     = "Employees"
 }
 
 variable "alb_name" {
   description = "Name of the Application Load Balancer"
   default     = "my-alb"
+}
+
+variable "lb_type" {
+  description = "load balancer type"
+  default     = "application"
 }
 
 variable "alb_logs_bucket" {
@@ -92,6 +109,11 @@ variable "target_id_1" {
 }
 
 variable "target_id_2" {
+  description = "Target ID for the second instance"
+  default     = "i-a1b2c3d4e5f6g7h8i"
+}
+
+variable "eks" {
   description = "Target ID for the second instance"
   default     = "i-a1b2c3d4e5f6g7h8i"
 }
