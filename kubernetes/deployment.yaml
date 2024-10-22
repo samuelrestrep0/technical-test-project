@@ -1,1 +1,22 @@
 # Deployment para la aplicación web
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: static-website-deployment
+  labels:
+    app: static-website
+spec:
+  replicas: 3  # Número de réplicas de los pods
+  selector:
+    matchLabels:
+      app: static-website
+  template:
+    metadata:
+      labels:
+        app: static-website
+    spec:
+      containers:
+      - name: static-website
+        image: tu-imagen-docker  # Cambia esto por el nombre de tu imagen Docker
+        ports:
+        - containerPort: 80  # Expone el puerto 80 donde NGINX está sirviendo la web

@@ -37,7 +37,7 @@ variable "public_subnets" {
 
 variable "eks_cluster_name" {
   description = "Name of the EKS cluster"
-  default     = "eks-cluster"
+  default     = "eks-cluster-bancolombia"
 }
 
 variable "eks_security_group_name" {
@@ -73,11 +73,6 @@ variable "eks_min_capacity" {
   default     = 1
 }
 
-variable "key_name" {
-  description = "Key pair name for EC2 instances"
-  default     = "my-key-pair"
-}
-
 variable "dynamodb_table_name" {
   description = "Name of the DynamoDB table"
   default     = "Employees"
@@ -93,10 +88,10 @@ variable "lb_type" {
   default     = "application"
 }
 
-variable "alb_logs_bucket" {
+/*variable "alb_logs_bucket" {
   description = "S3 bucket for ALB access logs"
   default     = "my-alb-logs"
-}
+}*/
 
 variable "certificate_arn" {
   description = "ARN of the SSL certificate for ALB"

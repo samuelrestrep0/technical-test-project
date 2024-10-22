@@ -1,21 +1,14 @@
-# Dockerfile para construir la imagen de la app
-# Usar la imagen base de Node.js
-FROM node:16
+# Use an official lightweight Node.js image to serve the static website
+FROM nginx:alpine
 
-# Establecer el directorio de trabajo
-WORKDIR /usr/src/app
+# Set working directory
+WORKDIR /usr/share/nginx/html
 
-# Copiar los archivos de package.json y package-lock.json
-COPY app/package*.json ./
+# Copy static files to the container
+COPY static-website/ .
 
-# Instalar las dependencias
-RUN npm install
+# Expose the port NGINX is running on
+EXPOSE 80
 
-# Copiar el resto del código de la aplicación
-COPY app/ ./
-
-# Exponer el puerto en el que se ejecutará la aplicación
-EXPOSE 3000
-
-# Comando para ejecutar la aplicación
-CMD ["npm", "start"]
+# Start NGINX server
+CMD ["nginx", "-g", "daemon off;"]
