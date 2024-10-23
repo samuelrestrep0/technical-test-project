@@ -1,0 +1,21 @@
+---
+- hosts: all
+  become: true
+  tasks:
+    - name: Instalar Docker
+      ansible.builtin.apt:
+        name: docker.io
+        state: present
+      when: ansible_os_family == 'Debian'
+
+    - name: Iniciar Docker
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Desplegar la aplicación en Kubernetes
+      ansible.builtin.shell: |
+        kubectl apply -f /path/to/kubernetes/deployment.yaml
+        kubectl apply -f /path/to/kubernetes/service.yaml
+        kubectl apply -f /path/to/kubernetes/ingress.yaml

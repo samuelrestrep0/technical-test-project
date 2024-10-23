@@ -17,6 +17,6 @@ spec:
     spec:
       containers:
       - name: static-website
-        image: tu-imagen-docker  # Cambia esto por el nombre de tu imagen Docker
+        image: nginx:alpine 
         ports:
         - containerPort: 80  # Expone el puerto 80 donde NGINX está sirviendo la web
