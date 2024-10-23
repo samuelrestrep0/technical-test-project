@@ -1,3 +1,8 @@
+variable "aws_region" {
+  description = "AWS region to deploy resources"
+  default     = "us-east-1"
+}
+
 variable "project_name" {
   description = "Nombre del proyecto"
   default     = "bancolombia-technical-test"
